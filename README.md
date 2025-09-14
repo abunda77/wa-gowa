@@ -8,28 +8,53 @@ WhatsApp Bulk Messenger adalah aplikasi web yang memungkinkan pengguna mengirim 
 
 ## Fitur Utama
 
+### Pengiriman & Personalisasi
 - **Pengiriman Massal**: Kirim pesan yang dipersonalisasi ke beberapa penerima sekaligus
 - **Dukungan Spintax**: Buat variasi pesan menggunakan sintaks `{opsi1|opsi2}` untuk menghindari deteksi spam
 - **Personalisasi**: Gunakan variabel seperti `[[nama]]` untuk konten spesifik penerima
+- **Format Nomor Otomatis**: Validasi dan format nomor telepon otomatis untuk kompatibilitas Gowa API
+
+### Manajemen Penerima
 - **Import CSV**: Unggah daftar kontak dengan nama dan nomor telepon
 - **Input Manual**: Tambahkan penerima secara manual untuk kampanye cepat
-- **Pelacakan Progress**: Pemantauan progress pengiriman secara real-time dengan fungsi pause/resume
-- **Logging Detail**: Jejak audit lengkap dari semua upaya pengiriman pesan
+
+### Kontrol Pengiriman Canggih
+- **Pelacakan Progress Real-Time**: Pemantauan progress pengiriman dengan progress bar dan counter live
+- **Kontrol Pengiriman Fleksibel**: Start, pause, resume, cancel, dan restart operasi pengiriman
+- **Proteksi Anti-Ban**: Jeda yang dapat dikonfigurasi 5-15 detik antar pesan dengan rekomendasi keamanan
+- **Pengaturan Jeda**: Slider untuk mengatur delay antar pesan (5-15 detik) dengan panduan keamanan
+
+### Logging & Monitoring
+- **Logging Detail Expandable**: Jejak audit lengkap dengan tampilan yang dapat diperluas
+- **Response API Lengkap**: Tampilan detail response API dengan format JSON
+- **Copy to Clipboard**: Fungsi copy satu-klik untuk pesan dan response API
+- **Counter Real-Time**: Penghitung berhasil/gagal yang update secara live
+- **Timestamp Detail**: Waktu pengiriman dengan format yang mudah dibaca
+
+### Interface & Pengalaman Pengguna
 - **Antarmuka Wizard Multi-Langkah**: (Penerima → Pesan → API → Kirim)
 - **Pratinjau Real-Time**: Pratinjau variasi spintax secara langsung
 - **Testing Koneksi API**: Validasi dan pengujian koneksi API
-- **Penanganan Error Komprehensif**: Logika retry dan penanganan error yang kuat
-- **Laporan Pengiriman**: Laporan siap ekspor
+- **Pengaturan Tersembunyi**: Panel pengaturan yang dapat ditampilkan/disembunyikan
+- **Status Badge**: Badge status dengan kode response API
+
+### Error Handling & Reporting
+- **Penanganan Error Komprehensif**: Logika retry dan penanganan error yang kuat dengan pesan detail
+- **Laporan Error Detail**: Pesan error dengan kode response API dan timestamp
+- **Laporan Pengiriman**: Laporan siap ekspor dengan detail lengkap
+- **Message ID Tracking**: Pelacakan Message ID untuk pesan yang berhasil dikirim
 
 ## Teknologi Stack
 
 ### Framework & Runtime
+
 - **Next.js 14.2.16** - Framework React dengan App Router
 - **React 18** - Library UI dengan hooks dan komponen fungsional
 - **TypeScript 5** - JavaScript dengan type safety dan strict mode
 - **Node.js** - Environment runtime
 
 ### UI & Styling
+
 - **Tailwind CSS 4.1.9** - Framework CSS utility-first
 - **shadcn/ui** - Library komponen berbasis Radix UI primitives
 - **Radix UI** - Komponen UI headless untuk aksesibilitas
@@ -38,33 +63,39 @@ WhatsApp Bulk Messenger adalah aplikasi web yang memungkinkan pengguna mengirim 
 - **Geist Font** - Tipografi (varian Sans & Mono)
 
 ### State Management & Forms
+
 - **React Hook Form 7.60.0** - Penanganan form dengan validasi
 - **Zod 3.25.67** - Validasi schema
 - **@hookform/resolvers** - Integrasi validasi form
 
 ### Library Utama
+
 - **class-variance-authority** - Manajemen varian komponen
 - **clsx & tailwind-merge** - Penanganan CSS class kondisional
 - **date-fns** - Manipulasi tanggal
 - **sonner** - Notifikasi toast
 
 ### Build System & Development
+
 - **pnpm** - Package manager cepat dan efisien ruang disk
 
 ## Instalasi
 
 1. **Clone repository**:
+
    ```bash
    git clone <repository-url>
    cd wa-gowa
    ```
 
 2. **Install dependencies**:
+
    ```bash
    pnpm install
    ```
 
 3. **Jalankan development server**:
+
    ```bash
    pnpm dev
    ```
@@ -117,33 +148,39 @@ pnpm lint         # Jalankan ESLint (saat ini dinonaktifkan selama build)
 ## Pola Arsitektur
 
 ### Organisasi Komponen
+
 - **Komponen berbasis fitur**: Setiap fitur utama memiliki file komponen sendiri
 - **Komponen UI**: Primitive UI yang dapat digunakan ulang di `components/ui/`
 - **Pemisahan business logic**: Panggilan API dan pemrosesan data di `lib/`
 - **Custom hooks**: Logic stateful yang dapat digunakan ulang di `hooks/`
 
 ### Konvensi Penamaan File
+
 - **kebab-case**: Semua nama file dan folder menggunakan kebab-case
 - **File komponen**: Ekstensi `.tsx` untuk komponen React
 - **File utility**: Ekstensi `.ts` untuk TypeScript murni
 - **Nama deskriptif**: Nama file jelas menunjukkan tujuannya
 
 ### Pola Import
+
 - **Path aliases**: Gunakan prefix `@/` untuk semua import internal
 - **Absolute imports**: Lebih suka `@/components/ui/button` daripada path relatif
 - **Type imports**: Gunakan keyword `type` untuk import TypeScript khusus type
 
 ### Manajemen State
+
 - **Local state**: useState untuk state spesifik komponen
 - **Prop drilling**: Pass state ke bawah melalui props komponen
 - **No global state**: Aplikasi menggunakan manajemen state lokal saja
 
 ### Integrasi API
+
 - **Logic API terpusat**: Semua panggilan Gowa API di `lib/gowa-api.ts`
 - **Interface type-safe**: Typing kuat untuk semua request/response API
 - **Penanganan error**: Penanganan error komprehensif dengan pesan user-friendly
 
 ### Struktur Komponen
+
 - **Single responsibility**: Setiap komponen menangani satu fitur spesifik
 - **Composition over inheritance**: Bangun UI kompleks dengan menggabungkan komponen sederhana
 - **Props interface**: Interface TypeScript yang jelas untuk semua props komponen
@@ -175,4 +212,4 @@ Tim marketing, departemen layanan pelanggan, dan bisnis yang perlu mengirim pesa
 
 ## Lisensi
 
-[Masukkan lisensi yang sesuai]
+Credit : https://github.com/aldinokemal/go-whatsapp-web-multidevice

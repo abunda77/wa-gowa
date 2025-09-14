@@ -1,98 +1,131 @@
-"use client"
+"use client";
 
-import { useState, useCallback } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Progress } from "@/components/ui/progress"
-import { Badge } from "@/components/ui/badge"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { ScrollArea } from "@/components/ui/scroll-area"
-import { Send, Pause, Play, Square, CheckCircle, XCircle, Clock, Loader2, Copy, Eye } from "lucide-react"
-import { sendMessage, formatPhoneNumber, type GowaApiConfig, type SendResult } from "@/lib/gowa-api"
-import { processSpintax } from "@/lib/spintax"
+import { useState, useCallback } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
+import {
+  Send,
+  Pause,
+  Play,
+  Square,
+  CheckCircle,
+  XCircle,
+  Clock,
+  Loader2,
+  Copy,
+  Eye,
+  Settings,
+} from "lucide-react";
+import {
+  sendMessage,
+  formatPhoneNumber,
+  type GowaApiConfig,
+  type SendResult,
+} from "@/lib/gowa-api";
+import { processSpintax } from "@/lib/spintax";
 
 interface Contact {
-  nama: string
-  nomor: string
+  nama: string;
+  nomor: string;
 }
 
 interface BulkSenderProps {
-  config: GowaApiConfig
-  message: string
-  contacts: Contact[]
-  numbers: string[]
-  onSendingComplete: (results: SendResult[]) => void
+  config: GowaApiConfig;
+  message: string;
+  contacts: Contact[];
+  numbers: string[];
+  onSendingComplete: (results: SendResult[]) => void;
 }
 
-type SendingStatus = "idle" | "sending" | "paused" | "completed" | "cancelled"
+type SendingStatus = "idle" | "sending" | "paused" | "completed" | "cancelled";
 
-export function BulkSender({ config, message, contacts, numbers, onSendingComplete }: BulkSenderProps) {
-  const [status, setStatus] = useState<SendingStatus>("idle")
-  const [progress, setProgress] = useState(0)
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [results, setResults] = useState<SendResult[]>([])
-  const [currentRecipient, setCurrentRecipient] = useState("")
-  const [isPaused, setIsPaused] = useState(false)
-  const [expandedLogs, setExpandedLogs] = useState<Set<number>>(new Set())
+export function BulkSender({
+  config,
+  message,
+  contacts,
+  numbers,
+  onSendingComplete,
+}: BulkSenderProps) {
+  const [status, setStatus] = useState<SendingStatus>("idle");
+  const [progress, setProgress] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [results, setResults] = useState<SendResult[]>([]);
+  const [currentRecipient, setCurrentRecipient] = useState("");
+  const [isPaused, setIsPaused] = useState(false);
+  const [expandedLogs, setExpandedLogs] = useState<Set<number>>(new Set());
+  const [delaySeconds, setDelaySeconds] = useState([8]); // Default 8 seconds
+  const [showSettings, setShowSettings] = useState(false);
 
   const recipients =
     contacts.length > 0
       ? contacts.map((c) => ({ phone: c.nomor, name: c.nama }))
-      : numbers.map((n) => ({ phone: n, name: undefined }))
+      : numbers.map((n) => ({ phone: n, name: undefined }));
 
-  const totalRecipients = recipients.length
+  const totalRecipients = recipients.length;
 
   const resetSending = useCallback(() => {
-    setStatus("idle")
-    setProgress(0)
-    setCurrentIndex(0)
-    setResults([])
-    setCurrentRecipient("")
-    setIsPaused(false)
-    setExpandedLogs(new Set())
-  }, [])
+    setStatus("idle");
+    setProgress(0);
+    setCurrentIndex(0);
+    setResults([]);
+    setCurrentRecipient("");
+    setIsPaused(false);
+    setExpandedLogs(new Set());
+  }, []);
 
   const startSending = useCallback(async () => {
     if (!message.trim()) {
-      alert("Pesan tidak boleh kosong")
-      return
+      alert("Pesan tidak boleh kosong");
+      return;
     }
 
     if (recipients.length === 0) {
-      alert("Tidak ada penerima yang tersedia")
-      return
+      alert("Tidak ada penerima yang tersedia");
+      return;
     }
 
-    setStatus("sending")
-    setResults([])
-    setCurrentIndex(0)
-    setProgress(0)
-    setIsPaused(false)
+    setStatus("sending");
+    setResults([]);
+    setCurrentIndex(0);
+    setProgress(0);
+    setIsPaused(false);
 
-    const newResults: SendResult[] = []
+    const newResults: SendResult[] = [];
 
     for (let i = 0; i < recipients.length; i++) {
       // Check if paused
       while (isPaused && status === "sending") {
-        await new Promise((resolve) => setTimeout(resolve, 100))
+        await new Promise((resolve) => setTimeout(resolve, 100));
       }
 
       // Check if cancelled
       if (status === "cancelled") {
-        break
+        break;
       }
 
-      const recipient = recipients[i]
-      setCurrentIndex(i)
-      setCurrentRecipient(recipient.name || recipient.phone)
+      const recipient = recipients[i];
+      setCurrentIndex(i);
+      setCurrentRecipient(recipient.name || recipient.phone);
 
       try {
         // Process spintax for this recipient
-        const variables = recipient.name ? { nama: recipient.name } : {}
-        const { processedMessage } = processSpintax(message, variables)
+        const variables = recipient.name ? { nama: recipient.name } : undefined;
+        const { processedMessage } = processSpintax(message, variables);
 
         // Format phone number
-        const formattedPhone = formatPhoneNumber(recipient.phone)
+        const formattedPhone = formatPhoneNumber(recipient.phone);
 
         // Send message
         const result = await sendMessage(config, {
@@ -101,7 +134,7 @@ export function BulkSender({ config, message, contacts, numbers, onSendingComple
           reply_message_id: null,
           is_forwarded: false,
           duration: 3600,
-        })
+        });
 
         const sendResult: SendResult = {
           phone: recipient.phone,
@@ -114,18 +147,21 @@ export function BulkSender({ config, message, contacts, numbers, onSendingComple
           responseCode: result.data?.code,
           responseMessage: result.data?.message,
           apiResponse: result.data,
-        }
+        };
 
-        newResults.push(sendResult)
-        setResults([...newResults])
+        newResults.push(sendResult);
+        setResults([...newResults]);
 
         // Update progress
-        const progressPercent = ((i + 1) / totalRecipients) * 100
-        setProgress(progressPercent)
+        const progressPercent = ((i + 1) / totalRecipients) * 100;
+        setProgress(progressPercent);
 
-        // Add delay between messages (1-2 seconds)
-        const delay = Math.random() * 1000 + 1000
-        await new Promise((resolve) => setTimeout(resolve, delay))
+        // Add configurable delay between messages (5-15 seconds)
+        // Skip delay for the last message
+        if (i < recipients.length - 1) {
+          const delayMs = delaySeconds[0] * 1000;
+          await new Promise((resolve) => setTimeout(resolve, delayMs));
+        }
       } catch (error) {
         const sendResult: SendResult = {
           phone: recipient.phone,
@@ -134,52 +170,60 @@ export function BulkSender({ config, message, contacts, numbers, onSendingComple
           success: false,
           error: error instanceof Error ? error.message : "Unknown error",
           timestamp: new Date(),
-        }
+        };
 
-        newResults.push(sendResult)
-        setResults([...newResults])
+        newResults.push(sendResult);
+        setResults([...newResults]);
       }
     }
 
-    setStatus("completed")
-    setCurrentRecipient("")
-    onSendingComplete(newResults)
-  }, [message, recipients, config, isPaused, status, totalRecipients, onSendingComplete])
+    setStatus("completed");
+    setCurrentRecipient("");
+    onSendingComplete(newResults);
+  }, [
+    message,
+    recipients,
+    config,
+    isPaused,
+    status,
+    totalRecipients,
+    onSendingComplete,
+  ]);
 
   const pauseSending = useCallback(() => {
-    setIsPaused(true)
-    setStatus("paused")
-  }, [])
+    setIsPaused(true);
+    setStatus("paused");
+  }, []);
 
   const resumeSending = useCallback(() => {
-    setIsPaused(false)
-    setStatus("sending")
-  }, [])
+    setIsPaused(false);
+    setStatus("sending");
+  }, []);
 
   const cancelSending = useCallback(() => {
-    setStatus("cancelled")
-    setIsPaused(false)
-  }, [])
+    setStatus("cancelled");
+    setIsPaused(false);
+  }, []);
 
   const toggleLogExpansion = useCallback(
     (index: number) => {
-      const newExpanded = new Set(expandedLogs)
+      const newExpanded = new Set(expandedLogs);
       if (newExpanded.has(index)) {
-        newExpanded.delete(index)
+        newExpanded.delete(index);
       } else {
-        newExpanded.add(index)
+        newExpanded.add(index);
       }
-      setExpandedLogs(newExpanded)
+      setExpandedLogs(newExpanded);
     },
-    [expandedLogs],
-  )
+    [expandedLogs]
+  );
 
   const copyToClipboard = useCallback((text: string) => {
-    navigator.clipboard.writeText(text)
-  }, [])
+    navigator.clipboard.writeText(text);
+  }, []);
 
-  const successCount = results.filter((r) => r.success).length
-  const failedCount = results.filter((r) => !r.success).length
+  const successCount = results.filter((r) => r.success).length;
+  const failedCount = results.filter((r) => !r.success).length;
 
   return (
     <Card>
@@ -188,17 +232,71 @@ export function BulkSender({ config, message, contacts, numbers, onSendingComple
           <Send className="h-5 w-5" />
           Bulk Sender
         </CardTitle>
-        <CardDescription>Kirim pesan ke {totalRecipients} penerima dengan spintax dan personalisasi</CardDescription>
+        <CardDescription>
+          Kirim pesan ke {totalRecipients} penerima dengan spintax dan
+          personalisasi
+        </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         {status === "idle" && (
           <div className="space-y-4">
             <Alert>
               <AlertDescription>
-                Siap mengirim pesan ke <strong>{totalRecipients} penerima</strong>.
-                {contacts.length > 0 && " Pesan akan dipersonalisasi dengan nama dari CSV."}
+                Siap mengirim pesan ke{" "}
+                <strong>{totalRecipients} penerima</strong>.
+                {contacts.length > 0 &&
+                  " Pesan akan dipersonalisasi dengan nama dari CSV."}
               </AlertDescription>
             </Alert>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-sm font-medium">
+                  Pengaturan Pengiriman
+                </Label>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setShowSettings(!showSettings)}
+                >
+                  <Settings className="h-4 w-4 mr-2" />
+                  {showSettings ? "Sembunyikan" : "Tampilkan"}
+                </Button>
+              </div>
+
+              {showSettings && (
+                <div className="border rounded-lg p-4 space-y-4 bg-muted/50">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-sm">
+                        Jeda antar pesan: {delaySeconds[0]} detik
+                      </Label>
+                      <Badge variant="outline" className="text-xs">
+                        Anti-Ban Protection
+                      </Badge>
+                    </div>
+                    <Slider
+                      value={delaySeconds}
+                      onValueChange={setDelaySeconds}
+                      max={15}
+                      min={5}
+                      step={1}
+                      className="w-full"
+                    />
+                    <div className="flex justify-between text-xs text-muted-foreground">
+                      <span>5 detik (Cepat)</span>
+                      <span>15 detik (Aman)</span>
+                    </div>
+                    <Alert>
+                      <AlertDescription className="text-xs">
+                        Jeda yang lebih lama membantu menghindari pembatasan dari WhatsApp. 
+                        Disarankan menggunakan 8-12 detik untuk keamanan optimal.
+                      </AlertDescription>
+                    </Alert>
+                  </div>
+                </div>
+              )}
+            </div>
 
             <Button onClick={startSending} className="w-full" size="lg">
               <Send className="h-4 w-4 mr-2" />
@@ -280,7 +378,11 @@ export function BulkSender({ config, message, contacts, numbers, onSendingComple
               </Badge>
             </div>
 
-            <Button onClick={resetSending} variant="outline" className="w-full bg-transparent">
+            <Button
+              onClick={resetSending}
+              variant="outline"
+              className="w-full bg-transparent"
+            >
               Kirim Lagi
             </Button>
           </div>
@@ -302,9 +404,17 @@ export function BulkSender({ config, message, contacts, numbers, onSendingComple
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2">
-                            <span className="font-medium text-sm">{result.name || result.phone}</span>
-                            <Badge variant={result.success ? "default" : "destructive"} className="text-xs">
-                              {result.responseCode || (result.success ? "SUCCESS" : "ERROR")}
+                            <span className="font-medium text-sm">
+                              {result.name || result.phone}
+                            </span>
+                            <Badge
+                              variant={
+                                result.success ? "default" : "destructive"
+                              }
+                              className="text-xs"
+                            >
+                              {result.responseCode ||
+                                (result.success ? "SUCCESS" : "ERROR")}
                             </Badge>
                           </div>
                           <div className="flex items-center gap-1">
@@ -324,24 +434,34 @@ export function BulkSender({ config, message, contacts, numbers, onSendingComple
                         </div>
 
                         {result.error && (
-                          <p className="text-red-600 text-xs mt-1">{result.responseMessage || result.error}</p>
+                          <p className="text-red-600 text-xs mt-1">
+                            {result.responseMessage || result.error}
+                          </p>
                         )}
 
                         {result.success && result.messageId && (
-                          <p className="text-green-600 text-xs mt-1">Message ID: {result.messageId}</p>
+                          <p className="text-green-600 text-xs mt-1">
+                            Message ID: {result.messageId}
+                          </p>
                         )}
 
                         {expandedLogs.has(index) && (
                           <div className="mt-3 space-y-2 border-t pt-2">
                             <div>
-                              <p className="text-xs font-medium text-muted-foreground">Pesan yang dikirim:</p>
+                              <p className="text-xs font-medium text-muted-foreground">
+                                Pesan yang dikirim:
+                              </p>
                               <div className="bg-muted p-2 rounded text-xs mt-1 relative">
-                                <pre className="whitespace-pre-wrap break-words">{result.message}</pre>
+                                <pre className="whitespace-pre-wrap break-words">
+                                  {result.message}
+                                </pre>
                                 <Button
                                   variant="ghost"
                                   size="sm"
                                   className="absolute top-1 right-1 h-6 w-6 p-0"
-                                  onClick={() => copyToClipboard(result.message)}
+                                  onClick={() =>
+                                    copyToClipboard(result.message)
+                                  }
                                 >
                                   <Copy className="h-3 w-3" />
                                 </Button>
@@ -350,16 +470,30 @@ export function BulkSender({ config, message, contacts, numbers, onSendingComple
 
                             {result.apiResponse && (
                               <div>
-                                <p className="text-xs font-medium text-muted-foreground">Response API:</p>
+                                <p className="text-xs font-medium text-muted-foreground">
+                                  Response API:
+                                </p>
                                 <div className="bg-muted p-2 rounded text-xs mt-1 relative">
                                   <pre className="whitespace-pre-wrap break-words">
-                                    {JSON.stringify(result.apiResponse, null, 2)}
+                                    {JSON.stringify(
+                                      result.apiResponse,
+                                      null,
+                                      2
+                                    )}
                                   </pre>
                                   <Button
                                     variant="ghost"
                                     size="sm"
                                     className="absolute top-1 right-1 h-6 w-6 p-0"
-                                    onClick={() => copyToClipboard(JSON.stringify(result.apiResponse, null, 2))}
+                                    onClick={() =>
+                                      copyToClipboard(
+                                        JSON.stringify(
+                                          result.apiResponse,
+                                          null,
+                                          2
+                                        )
+                                      )
+                                    }
                                   >
                                     <Copy className="h-3 w-3" />
                                   </Button>
@@ -368,12 +502,21 @@ export function BulkSender({ config, message, contacts, numbers, onSendingComple
                             )}
 
                             <div>
-                              <p className="text-xs font-medium text-muted-foreground">Detail Pengiriman:</p>
+                              <p className="text-xs font-medium text-muted-foreground">
+                                Detail Pengiriman:
+                              </p>
                               <div className="text-xs text-muted-foreground mt-1 space-y-1">
                                 <div>Nomor: {result.phone}</div>
-                                <div>Formatted: {formatPhoneNumber(result.phone)}</div>
-                                <div>Status: {result.success ? "Berhasil" : "Gagal"}</div>
-                                <div>Waktu: {result.timestamp.toLocaleString()}</div>
+                                <div>
+                                  Formatted: {formatPhoneNumber(result.phone)}
+                                </div>
+                                <div>
+                                  Status:{" "}
+                                  {result.success ? "Berhasil" : "Gagal"}
+                                </div>
+                                <div>
+                                  Waktu: {result.timestamp.toLocaleString()}
+                                </div>
                               </div>
                             </div>
                           </div>
@@ -388,5 +531,5 @@ export function BulkSender({ config, message, contacts, numbers, onSendingComple
         )}
       </CardContent>
     </Card>
-  )
+  );
 }
