@@ -35,7 +35,7 @@ pnpm install      # Install dependencies
 3. API configuration
 4. Bulk sending with real-time progress
 
-**API Proxy Pattern**: The app uses a Next.js API route (`app/api/gowa/send/message/route.ts`) as a proxy to the external Gowa API at `http://193.219.97.148:3003/send/message` to handle CORS issues.
+**API Proxy Pattern**: The app uses a Next.js API route (`app/api/gowa/send/message/route.ts`) as a proxy to the external Gowa API at `http://<IP_ADDRESS>/send/message` to handle CORS issues.
 
 **Business Logic Separation**: Core functionality is separated into `lib/` modules:
 - `gowa-api.ts`: API communication, phone formatting, validation
@@ -83,7 +83,7 @@ pnpm install      # Install dependencies
 ## External API Integration
 
 The app integrates with the Gowa WhatsApp Web API:
-- **Proxy Endpoint**: `/api/gowa/send/message` proxies to `http://193.219.97.148:3003/send/message`
+- **Proxy Endpoint**: `/api/gowa/send/message` proxies to `http://<IP_ADDRESS>/send/message`
 - **Authentication**: Basic Auth with username/password
 - **Message Format**: Phone numbers formatted as `{number}@s.whatsapp.net`
 - **Response Handling**: Processes various response codes (SUCCESS, 400, 500, etc.)
